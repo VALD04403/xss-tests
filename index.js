@@ -6,12 +6,11 @@ const passport = require('passport');
 const { check, validationResult } = require('express-validator');
 
 require('./authentication-setup');
-const { createMessage, getMessages, seedUsers } = require('./data-interface');
+const dataInterface = require('./data-interface');
 global.cache = cache;
-seedUsers();
+dataInterface.seedUsers();
 
 const app = express()
-  .use(bodyParser.json())
   .use(bodyParser.urlencoded({ extended: true }))
   .use(
     session({
@@ -35,7 +34,9 @@ const getErrorAsObject = errors =>
 
 // Requests that do not require authentication
 app
-  .get('/messages', (_, res) => res.send({ messages: getMessages() }))
+  .get('/messages', (_, res) =>
+    res.send({ messages: dataInterface.getMessages() })
+  )
   .post('/login', (req, res, next) => {
     passport.authenticate('local', (error, user) => {
       if (error) {
@@ -75,8 +76,12 @@ app
         return res.status(400).send({ errors: getErrorAsObject(errors) });
       }
 
-      createMessage(req.user.username, content, personalWebsiteURL);
-      return res.status(201).send({ messages: getMessages() });
+      dataInterface.createMessage(
+        req.user.username,
+        content,
+        personalWebsiteURL
+      );
+      return res.status(201).send({ messages: dataInterface.getMessages() });
     }
   );
 
